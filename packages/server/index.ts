@@ -27,17 +27,27 @@ app.get('/api/hello', (req: Request, res: Response) => {
    res.json({ message: 'Hello Panzi!' });
 });
 
+//To be able to make follow up questions, but only for one user.
+//let lastResponseId: string | null = null; //Replaced with a map.
+
+//Map conversationId to lastReponseId
+const conversations = new Map<string, string>();
+
 //Define a new endpoint for receiving prompts from the user.
 app.post('/api/chat', async (req: Request, res: Response) => {
-   //1.grab the user´s prompt from the request, using destructuring. Make sure you passed the middleware function first. (Up)
-   const { prompt } = req.body;
+   //1.grab the user´s prompt from the request, using destructuring. Make sure you passed the middleware function first. (Up) Ang get the conversationId from the body of the request.
+   const { prompt, conversationId } = req.body;
    //2.Send to OpenAI
    const response = await client.responses.create({
       model: 'gpt-4o-mini',
       input: prompt,
       temperature: 0.2,
       max_output_tokens: 100,
+      previous_response_id: conversations.get(conversationId),
    });
+
+   conversations.set(conversationId, response.id);
+
    //3. Return a json object to the client.
    res.json({ message: response.output_text });
 });
