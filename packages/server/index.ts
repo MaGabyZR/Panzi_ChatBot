@@ -2,6 +2,7 @@ import express from 'express';
 import type { Request, Response } from 'express';
 import dotenv from 'dotenv';
 import OpenAI from 'openai';
+import z from 'zod';
 
 //Streamline our environment variable.
 dotenv.config();
@@ -33,8 +34,25 @@ app.get('/api/hello', (req: Request, res: Response) => {
 //Map conversationId to lastReponseId
 const conversations = new Map<string, string>();
 
+//Call Zod for data validation schema.
+const chatSchema = z.object({
+   prompt: z
+      .string()
+      .trim()
+      .min(1, 'Prompt is required.')
+      .max(1000, 'Prompt is too long(max 1000 characters).'),
+   conversationId: z.uuid(),
+});
+
 //Define a new endpoint for receiving prompts from the user.
 app.post('/api/chat', async (req: Request, res: Response) => {
+   //validate incoming request data.
+   const parseResult = chatSchema.safeParse(req.body);
+   if (!parseResult.success) {
+      res.status(400).json(parseResult.error.format());
+      return;
+   }
+
    //1.grab the user´s prompt from the request, using destructuring. Make sure you passed the middleware function first. (Up) Ang get the conversationId from the body of the request.
    const { prompt, conversationId } = req.body;
    //2.Send to OpenAI
