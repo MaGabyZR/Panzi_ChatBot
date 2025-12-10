@@ -53,22 +53,28 @@ app.post('/api/chat', async (req: Request, res: Response) => {
       return;
    }
 
-   //1.grab the user´s prompt from the request, using destructuring. Make sure you passed the middleware function first. (Up) Ang get the conversationId from the body of the request.
-   const { prompt, conversationId } = req.body;
-   //2.Send to OpenAI
-   const response = await client.responses.create({
-      model: 'gpt-4o-mini',
-      input: prompt,
-      temperature: 0.2,
-      max_output_tokens: 100,
-      previous_response_id: conversations.get(conversationId),
-   });
+   //Handle errors.
+   try {
+      //1.grab the user´s prompt from the request, using destructuring. Make sure you passed the middleware function first. (Up) Ang get the conversationId from the body of the request.
+      const { prompt, conversationId } = req.body;
+      //2.Send to OpenAI
+      const response = await client.responses.create({
+         model: 'gpt-4o-mini',
+         input: prompt,
+         temperature: 0.2,
+         max_output_tokens: 100,
+         previous_response_id: conversations.get(conversationId),
+      });
 
-   conversations.set(conversationId, response.id);
+      conversations.set(conversationId, response.id);
 
-   //3. Return a json object to the client.
-   res.json({ message: response.output_text });
+      //3. Return a json object to the client.
+      res.json({ message: response.output_text });
+   } catch (error) {
+      res.status(500).json({ error: 'Failed to generate a response.' });
+   }
 });
+
 //Start the webserver
 app.listen(port, () => {
    console.log(`Server is running on http://localhost:${port}`);
