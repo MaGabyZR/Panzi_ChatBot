@@ -3,6 +3,7 @@ import type { Request, Response } from 'express';
 import dotenv from 'dotenv';
 import OpenAI from 'openai';
 import z from 'zod';
+import { conversationRepository } from './repositories/conversation.repository';
 
 //Streamline our environment variable.
 dotenv.config();
@@ -27,12 +28,6 @@ app.get('/', (req: Request, res: Response) => {
 app.get('/api/hello', (req: Request, res: Response) => {
    res.json({ message: 'Hello Panzi!' });
 });
-
-//To be able to make follow up questions, but only for one user.
-//let lastResponseId: string | null = null; //Replaced with a map.
-
-//Map conversationId to lastReponseId
-const conversations = new Map<string, string>();
 
 //Call Zod for data validation schema.
 const chatSchema = z.object({
@@ -63,10 +58,11 @@ app.post('/api/chat', async (req: Request, res: Response) => {
          input: prompt,
          temperature: 0.2,
          max_output_tokens: 100,
-         previous_response_id: conversations.get(conversationId),
+         previous_response_id:
+            conversationRepository.getLastResponseId(conversationId),
       });
 
-      conversations.set(conversationId, response.id);
+      conversationRepository.setLastResponseId(conversationId, response.id);
 
       //3. Return a json object to the client.
       res.json({ message: response.output_text });
