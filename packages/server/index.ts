@@ -1,8 +1,7 @@
 import express from 'express';
 import type { Request, Response } from 'express';
 import dotenv from 'dotenv';
-import z from 'zod';
-import { chatService } from './services/chat.service';
+import { chatController } from './controllers/chat.controller';
 
 //Streamline our environment variable.
 dotenv.config();
@@ -23,35 +22,8 @@ app.get('/api/hello', (req: Request, res: Response) => {
    res.json({ message: 'Hello Panzi!' });
 });
 
-//Call Zod for data validation schema.
-const chatSchema = z.object({
-   prompt: z
-      .string()
-      .trim()
-      .min(1, 'Prompt is required.')
-      .max(1000, 'Prompt is too long(max 1000 characters).'),
-   conversationId: z.uuid(),
-});
-
 //Define a new endpoint for receiving prompts from the user.
-app.post('/api/chat', async (req: Request, res: Response) => {
-   //validate incoming request data.
-   const parseResult = chatSchema.safeParse(req.body);
-   if (!parseResult.success) {
-      res.status(400).json(parseResult.error.format());
-      return;
-   }
-   //Handle errors.
-   try {
-      //1.grab the user´s prompt from the request, using destructuring. Make sure you passed the middleware function first. (Up) Ang get the conversationId from the body of the request.
-      const { prompt, conversationId } = req.body;
-      const response = await chatService.sendMessage(prompt, conversationId);
-      //3. Return a json object to the client.
-      res.json({ message: response.message });
-   } catch (error) {
-      res.status(500).json({ error: 'Failed to generate a response.' });
-   }
-});
+app.post('/api/chat', chatController.sendMessage);
 
 //Start the webserver
 app.listen(port, () => {
