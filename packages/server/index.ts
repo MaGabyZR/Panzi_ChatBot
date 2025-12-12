@@ -1,29 +1,20 @@
 import express from 'express';
-import type { Request, Response } from 'express';
 import dotenv from 'dotenv';
-import { chatController } from './controllers/chat.controller';
+import router from './routes';
 
-//Streamline our environment variable.
+//Configure our environment variable.
 dotenv.config();
 
 //Define a route and a route handler.
-//Route
+//1. Create the app
 const app = express();
-//Return a middleware function that gets executed before passing the request to the request handler. If you do not pass it, the prompt request body is gping to be undefined.
+//2.Return a middleware function that gets executed before passing the request to the request handler. If you do not pass it, the prompt request body is gping to be undefined.
 app.use(express.json());
+//3. Add a router
+app.use(router);
+
+//Initialize the port.
 const port = process.env.PORT || 3000;
-
-//Route handler.
-app.get('/', (req: Request, res: Response) => {
-   res.send('Hello Monti!');
-});
-
-app.get('/api/hello', (req: Request, res: Response) => {
-   res.json({ message: 'Hello Panzi!' });
-});
-
-//Define a new endpoint for receiving prompts from the user.
-app.post('/api/chat', chatController.sendMessage);
 
 //Start the webserver
 app.listen(port, () => {
