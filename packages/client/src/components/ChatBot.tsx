@@ -1,3 +1,5 @@
+import axios from 'axios';
+import { useRef, type KeyboardEvent } from 'react';
 import { useForm } from 'react-hook-form';
 import { BsSendArrowUp } from 'react-icons/bs';
 import { Button } from './ui/button';
@@ -8,24 +10,30 @@ type FormData = {
 };
 
 const ChatBot = () => {
+   const conversationId = useRef(crypto.randomUUID()); //to create the unique Id for the conversation, it should be created once and should not change, this is why you don´t use the state hook.
    const { register, handleSubmit, reset, formState } = useForm<FormData>();
 
-   //Submit the form and clear it.
-   const onSubmit = (data: FormData) => {
-      console.log(data);
+   //Submit the form and clear it, and call the backend (axios).
+   const onSubmit = async ({ prompt }: FormData) => {
       reset();
+
+      const { data } = await axios.post('/api/chat', {
+         prompt,
+         conversationId: conversationId.current,
+      });
+      console.log(data);
    };
 
-   const onKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
+   const onKeyDown = (e: KeyboardEvent<HTMLFormElement>) => {
       if (e.key === 'Enter' && !e.shiftKey) {
          e.preventDefault();
-         handleSubmit(onSubmit)(); //Call the function.
+         handleSubmit(onSubmit)(); //call the function.
       }
    };
 
    return (
       <form
-         onSubmit={handleSubmit(onSubmit)} //Pass a funciton reference.
+         onSubmit={(e) => handleSubmit(onSubmit)(e)} //Pass a function reference.
          onKeyDown={onKeyDown}
          className="flex flex-col gap-2 items-end border-2 p-4 rounded-3xl"
       >
