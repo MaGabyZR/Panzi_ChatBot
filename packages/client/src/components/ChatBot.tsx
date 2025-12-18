@@ -13,14 +13,20 @@ type ChatResponse = {
    message: string;
 };
 
+//to style the messages, depending on who writes them.
+type Message = {
+   content: string;
+   role: 'user' | 'bot';
+};
+
 const ChatBot = () => {
-   const [messages, setMessages] = useState<string[]>([]);
+   const [messages, setMessages] = useState<Message[]>([]);
    const conversationId = useRef(crypto.randomUUID()); //to create the unique Id for the conversation, it should be created once and should not change, this is why you don´t use the state hook.
    const { register, handleSubmit, reset, formState } = useForm<FormData>();
 
    //Submit the form and clear it, and call the backend (axios).
    const onSubmit = async ({ prompt }: FormData) => {
-      setMessages((prev) => [...prev, prompt]); //to get the latest version of the mesages array. prev = previous.
+      setMessages((prev) => [...prev, { content: prompt, role: 'user' }]); //to get the latest version of the mesages array. prev = previous.
 
       reset();
 
@@ -29,7 +35,7 @@ const ChatBot = () => {
          prompt,
          conversationId: conversationId.current,
       });
-      setMessages((prev) => [...prev, data.message]); //get the latest version of the mesages array, data is an object with a message property.
+      setMessages((prev) => [...prev, { content: data.message, role: 'bot' }]); //get the latest version of the mesages array, data is an object with a message property.
    };
 
    const onKeyDown = (e: KeyboardEvent<HTMLFormElement>) => {
@@ -41,9 +47,18 @@ const ChatBot = () => {
 
    return (
       <div>
-         <div>
+         <div className="flex flex-col gap-3 mb-10">
             {messages.map((message, index) => (
-               <p key={index}>{message}</p>
+               <p
+                  key={index}
+                  className={`px-3 py-1 rounded-xl ${
+                     message.role === 'user'
+                        ? 'bg-blue-400 text-amber-100 self-end'
+                        : 'bg-gray-400 text-yellow-200 self-start'
+                  }`}
+               >
+                  {message.content}
+               </p>
             ))}
          </div>
          <form
