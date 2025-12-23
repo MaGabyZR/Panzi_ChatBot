@@ -23,12 +23,12 @@ type Message = {
 const ChatBot = () => {
    const [messages, setMessages] = useState<Message[]>([]);
    const [isBotTyping, setIsBotTyping] = useState(false);
-   const formRef = useRef<HTMLFormElement | null>(null); //to start an auto scrolling when the screen is full.
+   const lastMessageRef = useRef<HTMLDivElement | null>(null); //to start an auto scrolling when the screen is full.
    const conversationId = useRef(crypto.randomUUID()); //to create the unique Id for the conversation, it should be created once and should not change, this is why you don´t use the state hook.
    const { register, handleSubmit, reset, formState } = useForm<FormData>();
 
    useEffect(() => {
-      formRef.current?.scrollIntoView({ behavior: 'smooth' });
+      lastMessageRef.current?.scrollIntoView({ behavior: 'smooth' });
    }, [messages]);
 
    //Submit the form and clear it, and call the backend (axios).
@@ -36,7 +36,7 @@ const ChatBot = () => {
       setMessages((prev) => [...prev, { content: prompt, role: 'user' }]); //to get the latest version of the mesages array. prev = previous.
       setIsBotTyping(true);
 
-      reset();
+      reset({ prompt: '' }); //to be able to send the same question as many times as you want.
 
       const { data } = await axios.post<ChatResponse>('/api/chat', {
          //data is an object we get from the server.
@@ -62,13 +62,15 @@ const ChatBot = () => {
       }
    };
    return (
-      <div>
-         <div className="flex flex-col gap-3 mb-10">
+      <div className="flex flex-col h-full">
+         <div className="flex flex-col flex-1 gap-3 mb-10 overflow-y-auto">
             {messages.map((message, index) => (
-               <p
+               <div
                   key={index}
                   //copy a selected text.
                   onCopy={onCopyMessage}
+                  //for autoscrolling.
+                  ref={index === messages.length - 1 ? lastMessageRef : null}
                   className={`px-3 py-1 rounded-xl ${
                      message.role === 'user'
                         ? 'bg-purple-300 text-purple-800 self-end'
@@ -76,7 +78,7 @@ const ChatBot = () => {
                   }`}
                >
                   <ReactMarkdown>{message.content}</ReactMarkdown>
-               </p>
+               </div>
             ))}
             {isBotTyping && (
                <div className="flex self-start gap-1 px-3 py-3 bg-purple-100 rounded-xl">
@@ -89,14 +91,15 @@ const ChatBot = () => {
          <form
             onSubmit={(e) => handleSubmit(onSubmit)(e)} //Pass a function reference. This ensures handleSubmit is only "triggered" when the actual submit event occurs, not during the render process.
             onKeyDown={onKeyDown}
-            ref={formRef} //for autoscrolling.
             className="flex flex-col gap-2 items-end border-2 p-4 rounded-3xl"
          >
             <textarea
+               //... to spread the object and add all its props to the text area.
                {...register('prompt', {
                   required: true,
                   validate: (data) => data.trim().length > 0,
-               })} //... to spread the object and add all its props to the text area.
+               })}
+               autoFocus
                className="w-full border-0 focus:outline-0 resize-none"
                placeholder="Ask anything you want!"
                maxLength={1000}
