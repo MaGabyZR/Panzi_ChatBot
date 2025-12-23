@@ -3,7 +3,8 @@ import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useForm } from 'react-hook-form';
 import { BsSendArrowUp } from 'react-icons/bs';
-import { Button } from './ui/button';
+import { Button } from '../ui/button';
+import TypingIndicator from './TypingIndicator';
 
 //Handle form submissions.
 type FormData = {
@@ -92,14 +93,8 @@ const ChatBot = () => {
                   <ReactMarkdown>{message.content}</ReactMarkdown>
                </div>
             ))}
-            {isBotTyping && (
-               <div className="flex self-start gap-1 px-3 py-3 bg-purple-100 rounded-xl">
-                  <div className="w-2 h-2 rounded-full bg-purple-300 animate-pulse"></div>
-                  <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse [animation-delay:0.2s]"></div>
-                  <div className="w-2 h-2 rounded-full bg-purple-800 animate-pulse [animation-delay:0.4s]"></div>
-               </div>
-            )}
-            {error && <p className="text-orange-500">{error}</p>}
+            {isBotTyping && <TypingIndicator />}
+            {error && <p className="text-pink-700">{error}</p>}
          </div>
          <form
             onSubmit={(e) => handleSubmit(onSubmit)(e)} //Pass a function reference. This ensures handleSubmit is only "triggered" when the actual submit event occurs, not during the render process.
