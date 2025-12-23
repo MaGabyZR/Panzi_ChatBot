@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { useRef, useState, type KeyboardEvent } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useForm } from 'react-hook-form';
 import { BsSendArrowUp } from 'react-icons/bs';
@@ -22,12 +22,19 @@ type Message = {
 
 const ChatBot = () => {
    const [messages, setMessages] = useState<Message[]>([]);
+   const [isBotTyping, setIsBotTyping] = useState(false);
+   const formRef = useRef<HTMLFormElement | null>(null); //to start an auto scrolling when the screen is full.
    const conversationId = useRef(crypto.randomUUID()); //to create the unique Id for the conversation, it should be created once and should not change, this is why you don´t use the state hook.
    const { register, handleSubmit, reset, formState } = useForm<FormData>();
+
+   useEffect(() => {
+      formRef.current?.scrollIntoView({ behavior: 'smooth' });
+   }, [messages]);
 
    //Submit the form and clear it, and call the backend (axios).
    const onSubmit = async ({ prompt }: FormData) => {
       setMessages((prev) => [...prev, { content: prompt, role: 'user' }]); //to get the latest version of the mesages array. prev = previous.
+      setIsBotTyping(true);
 
       reset();
 
@@ -37,6 +44,7 @@ const ChatBot = () => {
          conversationId: conversationId.current,
       });
       setMessages((prev) => [...prev, { content: data.message, role: 'bot' }]); //get the latest version of the mesages array, data is an object with a message property.
+      setIsBotTyping(false);
    };
 
    const onKeyDown = (e: KeyboardEvent<HTMLFormElement>) => {
@@ -54,17 +62,25 @@ const ChatBot = () => {
                   key={index}
                   className={`px-3 py-1 rounded-xl ${
                      message.role === 'user'
-                        ? 'bg-blue-400 text-amber-100 self-end'
-                        : 'bg-gray-400 text-yellow-200 self-start'
+                        ? 'bg-purple-300 text-purple-800 self-end'
+                        : 'bg-gray-300 text-purple-900 self-start'
                   }`}
                >
                   <ReactMarkdown>{message.content}</ReactMarkdown>
                </p>
             ))}
+            {isBotTyping && (
+               <div className="flex self-start gap-1 px-3 py-3 bg-purple-100 rounded-xl">
+                  <div className="w-2 h-2 rounded-full bg-purple-300 animate-pulse"></div>
+                  <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse [animation-delay:0.2s]"></div>
+                  <div className="w-2 h-2 rounded-full bg-purple-800 animate-pulse [animation-delay:0.4s]"></div>
+               </div>
+            )}
          </div>
          <form
             onSubmit={(e) => handleSubmit(onSubmit)(e)} //Pass a function reference. This ensures handleSubmit is only "triggered" when the actual submit event occurs, not during the render process.
             onKeyDown={onKeyDown}
+            ref={formRef} //for autoscrolling.
             className="flex flex-col gap-2 items-end border-2 p-4 rounded-3xl"
          >
             <textarea
