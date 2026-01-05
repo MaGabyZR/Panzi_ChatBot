@@ -1,10 +1,11 @@
 import axios from 'axios';
-import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
-import ReactMarkdown from 'react-markdown';
+import { useRef, useState, type KeyboardEvent } from 'react';
 import { useForm } from 'react-hook-form';
 import { BsSendArrowUp } from 'react-icons/bs';
 import { Button } from '../ui/button';
 import TypingIndicator from './TypingIndicator';
+import type { Message } from './ChatMessages';
+import ChatMessages from './ChatMessages';
 
 //Handle form submissions.
 type FormData = {
@@ -15,23 +16,13 @@ type ChatResponse = {
    message: string;
 };
 
-//to style the messages, depending on who writes them.
-type Message = {
-   content: string;
-   role: 'user' | 'bot';
-};
-
 const ChatBot = () => {
    const [messages, setMessages] = useState<Message[]>([]);
    const [isBotTyping, setIsBotTyping] = useState(false);
    const [error, setError] = useState(''); //error handling.
-   const lastMessageRef = useRef<HTMLDivElement | null>(null); //to start an auto scrolling when the screen is full.
+
    const conversationId = useRef(crypto.randomUUID()); //to create the unique Id for the conversation, it should be created once and should not change, this is why you don´t use the state hook.
    const { register, handleSubmit, reset, formState } = useForm<FormData>();
-
-   useEffect(() => {
-      lastMessageRef.current?.scrollIntoView({ behavior: 'smooth' });
-   }, [messages]);
 
    //Submit the form and clear it, and call the backend (axios).
    const onSubmit = async ({ prompt }: FormData) => {
@@ -67,34 +58,12 @@ const ChatBot = () => {
       }
    };
 
-   const onCopyMessage = (e: React.ClipboardEvent) => {
-      const selection = window.getSelection()?.toString().trim();
-      if (selection) {
-         e.preventDefault();
-         e.clipboardData.setData('text/plain', selection);
-      }
-   };
    return (
       <div className="flex flex-col h-full">
          <div className="flex flex-col flex-1 gap-3 mb-10 overflow-y-auto">
-            {messages.map((message, index) => (
-               <div
-                  key={index}
-                  //copy a selected text.
-                  onCopy={onCopyMessage}
-                  //for autoscrolling.
-                  ref={index === messages.length - 1 ? lastMessageRef : null}
-                  className={`px-3 py-1 rounded-xl ${
-                     message.role === 'user'
-                        ? 'bg-purple-300 text-purple-800 self-end'
-                        : 'bg-gray-300 text-purple-900 self-start'
-                  }`}
-               >
-                  <ReactMarkdown>{message.content}</ReactMarkdown>
-               </div>
-            ))}
+            <ChatMessages messages={messages} />
             {isBotTyping && <TypingIndicator />}
-            {error && <p className="text-pink-700">{error}</p>}
+            {error && <p className="text-pink-600">{error}</p>}
          </div>
          <form
             onSubmit={(e) => handleSubmit(onSubmit)(e)} //Pass a function reference. This ensures handleSubmit is only "triggered" when the actual submit event occurs, not during the render process.
