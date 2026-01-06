@@ -35,7 +35,7 @@ const ChatMessages = ({ messages }: Props) => {
                onCopy={onCopyMessage}
                //for autoscrolling.
                ref={index === messages.length - 1 ? lastMessageRef : null}
-               className={`px-3 py-1 rounded-xl ${
+               className={`px-3 py-1 max-w-md rounded-xl ${
                   message.role === 'user'
                      ? 'bg-purple-300 text-purple-800 self-end'
                      : 'bg-gray-300 text-purple-900 self-start'
