@@ -20,4 +20,10 @@ router.post('/api/chat', chatController.sendMessage);
 //Call the DB using Prisma to fetch all the reviews for a particular product.
 router.get('/api/products/:id/reviews', reviewController.getReviews);
 
+//Define a new endpoint for summarizing the reviews for a given product.
+router.post(
+   '/api/products/:id/reviews/summarize',
+   reviewController.summarizeReviews
+);
+
 export default router;
