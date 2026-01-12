@@ -1,3 +1,4 @@
+import OpenAI from 'openai';
 import { type Review } from '../generated/prisma/client';
 import { reviewRepository } from '../repositories/review.repository';
 
@@ -13,11 +14,28 @@ export const reviewService = {
       const reviews = await reviewRepository.getReviews(productId, 10);
       //Join the reviews in a string to send to an LLM. '\n\n' to separate and format the string.
       const joinedReviews = reviews.map((r) => r.content).join('\n\n');
+      //Create a prompt and insert contect dynamically ``.
+      const prompt = `
+        Summarize the following customer reviews into a short paragraph
+        highlinting key themes, both positive and negative: 
 
-      //Send the reviews to a LLM
+        ${joinedReviews}
+      `;
+      //use the client to create a summary.
+      const response = await client.responses.create({
+         model: 'gpt-4.1',
+         input: prompt,
+         temperature: 0.2,
+         max_output_tokens: 500,
+      });
 
-      //To test hardcode a summary.
-      const summary = 'This is a placeholder summary, to test.';
-      return summary;
+      /*      //To test hardcode a summary. Than replaced with the response.output
+      const summary = 'This is a placeholder summary, to test.'; */
+
+      return response.output_text;
    },
 };
+//Send the reviews to a LLM
+const client = new OpenAI({
+   apiKey: process.env.OPENAI_API_KEY,
+});
