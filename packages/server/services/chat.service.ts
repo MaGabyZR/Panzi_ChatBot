@@ -1,13 +1,13 @@
 import fs from 'fs';
 import path from 'path';
-import OpenAI from 'openai';
 import { conversationRepository } from '../repositories/conversation.repository';
 import template from '../prompts/chatbot.txt';
+import { llmClient } from '../llm/client';
 
-//Create a new instance of OpenAI with our API Key. Implementation detail => not to be exposed.
+/* //Create a new instance of OpenAI with our API Key. Implementation detail => not to be exposed. All this logic was moved to client.ts
 const client = new OpenAI({
    apiKey: process.env.OPENAI_API_KEY,
-});
+}); */
 
 //to read the .md file y a synchronous way and encode it with utf-8.
 const parkInfo = fs.readFileSync(
@@ -28,21 +28,21 @@ export const chatService = {
       prompt: string,
       conversationId: string
    ): Promise<ChatResponse> {
-      //Send to OpenAI
-      const response = await client.responses.create({
+      //Send to OpenAI, by calling client.ts
+      const response = await llmClient.generateText({
          model: 'gpt-4o-mini',
          instructions,
-         input: prompt,
+         prompt,
          temperature: 0.2,
-         max_output_tokens: 250,
-         previous_response_id:
+         maxTokens: 250,
+         previousResponseId:
             conversationRepository.getLastResponseId(conversationId),
       });
       conversationRepository.setLastResponseId(conversationId, response.id);
 
       return {
          id: response.id,
-         message: response.output_text,
+         message: response.text,
       };
    },
 };
