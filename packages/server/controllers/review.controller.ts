@@ -13,10 +13,21 @@ export const reviewController = {
          res.status(400).json({ error: 'Invalid product ID.' });
          return;
       }
-      //Call the review service to get the reviews and put them in the response.
-      const reviews = await reviewService.getReviews(productId);
+      //Call the repository to check if we have a product by this Id.
+      const product = await productRepository.getProduct(productId);
+      if (!product) {
+         res.status(404).json({ error: 'Product does not exist.' });
+         return;
+      }
+      //Call the repository directly to get the reviews and put them in the response.
+      const reviews = await reviewRepository.getReviews(productId);
+      //Get the summary
+      const summary = await reviewRepository.getReviewSummary(productId);
 
-      res.json(reviews);
+      res.json({
+         summary,
+         reviews,
+      });
    },
 
    //Method for handling request for summarizing reviews.
