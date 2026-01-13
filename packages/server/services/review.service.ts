@@ -11,6 +11,13 @@ export const reviewService = {
 
    //Define a new method to summarize reviews.
    async summarizeReviews(productId: number): Promise<string> {
+      //Check if there is already a summary for the given product.
+      const existingSummary =
+         await reviewRepository.getReviewSummary(productId);
+      if (existingSummary && existingSummary.expiresAt > new Date()) {
+         return existingSummary.content;
+      }
+
       //Get the latest reviews (ex. the last 10)
       const reviews = await reviewRepository.getReviews(productId, 10);
       //Join the reviews in a string to send to an LLM. '\n\n' to separate and format the string.
