@@ -19,14 +19,17 @@ export const reviewService = {
       const prompt = template.replace('{{reviews}}', joinedReviews);
 
       //use the client to create a summary.Send the reviews to a LLM, by just calling llClient from client.ts
-      const response = await llmClient.generateText({
+      const { text: summary } = await llmClient.generateText({
          model: 'gpt-4.1',
          prompt,
          temperature: 0.2,
          maxTokens: 500,
       });
 
-      return response.text;
+      //store in the db before returning it.
+      await reviewRepository.storeReviewSummary(productId, summary);
+
+      return summary;
 
       /*      //To test hardcode a summary. Than replaced with the response.output
       const summary = 'This is a placeholder summary, to test.'; */
