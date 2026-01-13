@@ -32,4 +32,11 @@ export const reviewRepository = {
          update: data,
       });
    },
+
+   //Add a new method to check if there is a summary for a given product.
+   getReviewSummary(productId: number) {
+      return prisma.summary.findUnique({
+         where: { productId },
+      });
+   },
 };
