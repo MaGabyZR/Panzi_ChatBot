@@ -33,10 +33,14 @@ export const reviewRepository = {
       });
    },
 
-   //Add a new method to check if there is a summary for a given product.
-   getReviewSummary(productId: number) {
-      return prisma.summary.findUnique({
-         where: { productId },
+   //Add a new method to check if there is a summary for a given product, and filter by Id and summary expiration date. gt=greater than.
+   async getReviewSummary(productId: number): Promise<string | null> {
+      const summary = await prisma.summary.findFirst({
+         where: {
+            AND: [{ productId }, { expiresAt: { gt: new Date() } }],
+         },
       });
+
+      return summary ? summary.content : null;
    },
 };
