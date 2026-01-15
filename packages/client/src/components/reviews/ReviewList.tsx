@@ -24,16 +24,23 @@ const ReviewList = ({ productId }: Props) => {
    //State variable.
    const [reviewData, setReviewData] = useState<GetReviewsResponse>();
    const [isLoading, setIsLoading] = useState(false);
+   const [error, setError] = useState('');
 
    useEffect(() => {
       //Const to make an API call using axios and insert products dynamically.
       const fetchReviews = async () => {
-         setIsLoading(true);
-         const { data } = await axios.get<GetReviewsResponse>(
-            `/api/products/${productId}/reviews`
-         );
-         setReviewData(data);
-         setIsLoading(false);
+         try {
+            setIsLoading(true);
+            const { data } = await axios.get<GetReviewsResponse>(
+               `/api/products/${productId}/reviews`
+            );
+            setReviewData(data);
+         } catch (error) {
+            console.error(error);
+            setError('Could not fetch the reviews. Try again later!');
+         } finally {
+            setIsLoading(false);
+         }
       };
       //make an API call and get the data.
       fetchReviews();
@@ -51,6 +58,10 @@ const ReviewList = ({ productId }: Props) => {
             ))}
          </div>
       );
+   }
+
+   if (error) {
+      return <p className="text-red-500">{error}</p>;
    }
 
    return (
