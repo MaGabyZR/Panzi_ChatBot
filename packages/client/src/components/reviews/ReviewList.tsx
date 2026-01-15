@@ -4,6 +4,7 @@ import { HiSparkles } from 'react-icons/hi';
 import StarRating from './StarRating';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '../ui/button';
+import { useState } from 'react';
 
 type Props = {
    productId: number;
@@ -22,7 +23,19 @@ type GetReviewsResponse = {
    reviews: Review[];
 };
 
+type SummarizeResponse = {
+   summary: string;
+};
+
 const ReviewList = ({ productId }: Props) => {
+   //Track the summary.
+   const [summary, setSummary] = useState('');
+
+   /*    //State variable. Replaced by useQuery.
+   const [reviewData, setReviewData] = useState<GetReviewsResponse>();
+   const [isLoading, setIsLoading] = useState(false);
+   const [error, setError] = useState(''); */
+
    //use the query hook from Tanstack.
    const {
       data: reviewData,
@@ -33,10 +46,13 @@ const ReviewList = ({ productId }: Props) => {
       queryFn: () => fetchReviews(), //get the data from the backend.
    });
 
-   /*    //State variable. Replaced by useQuery.
-   const [reviewData, setReviewData] = useState<GetReviewsResponse>();
-   const [isLoading, setIsLoading] = useState(false);
-   const [error, setError] = useState(''); */
+   //Define a function for handling summary generation, and use axios to make an API call.
+   const handleSummarize = async () => {
+      const { data } = await axios.post<SummarizeResponse>(
+         `/api/products/${productId}/reviews/summarize`
+      );
+      setSummary(data.summary);
+   };
 
    //Const to make an API call using axios and insert products dynamically. You get the data and return it.
    const fetchReviews = async () => {
@@ -72,13 +88,15 @@ const ReviewList = ({ productId }: Props) => {
       return null;
    }
 
+   const currentSummary = reviewData.summary || summary;
+
    return (
       <div>
          <div className="mb-5 ">
-            {reviewData?.summary ? (
-               <p>{reviewData.summary}</p>
+            {currentSummary ? (
+               <p>{currentSummary}</p>
             ) : (
-               <Button>
+               <Button onClick={handleSummarize}>
                   <HiSparkles />
                   Summarize
                </Button>
