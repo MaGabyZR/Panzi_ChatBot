@@ -32,6 +32,8 @@ const ReviewList = ({ productId }: Props) => {
    const [summary, setSummary] = useState('');
    //Track the loading state.
    const [isSummaryLoading, setIsSummaryLoading] = useState(false);
+   //Track errors.
+   const [summaryError, setSummaryError] = useState('');
 
    /*    //State variable. Replaced by useQuery.
    const [reviewData, setReviewData] = useState<GetReviewsResponse>();
@@ -50,14 +52,21 @@ const ReviewList = ({ productId }: Props) => {
 
    //Define a function for handling summary generation, and use axios to make an API call.
    const handleSummarize = async () => {
-      setIsSummaryLoading(true);
+      try {
+         setIsSummaryLoading(true);
+         setSummaryError('');
 
-      const { data } = await axios.post<SummarizeResponse>(
-         `/api/products/${productId}/reviews/summarize`
-      );
+         const { data } = await axios.post<SummarizeResponse>(
+            `/api/products/${productId}/reviews/summarize`
+         );
 
-      setSummary(data.summary);
-      setIsSummaryLoading(false);
+         setSummary(data.summary);
+      } catch (error) {
+         console.error(error);
+         setSummaryError('Could not summarize the reviews. Try again!');
+      } finally {
+         setIsSummaryLoading(false);
+      }
    };
 
    //Const to make an API call using axios and insert products dynamically. You get the data and return it.
@@ -80,7 +89,7 @@ const ReviewList = ({ productId }: Props) => {
 
    if (error) {
       return (
-         <p className="text-red-500">
+         <p className="text-red-600">
             Could not fetch reviews. Try again later!
          </p>
       );
@@ -111,6 +120,9 @@ const ReviewList = ({ productId }: Props) => {
                      <div className="py-3">
                         <ReviewSkeleton />
                      </div>
+                  )}
+                  {summaryError && (
+                     <p className="text-red-600">{summaryError}</p>
                   )}
                </div>
             )}
