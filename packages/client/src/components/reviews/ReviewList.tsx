@@ -1,9 +1,8 @@
 import axios from 'axios';
 import { HiSparkles } from 'react-icons/hi';
 import StarRating from './StarRating';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { Button } from '../ui/button';
-import { useState } from 'react';
 import ReviewSkeleton from './ReviewSkeleton';
 
 type Props = {
@@ -28,12 +27,23 @@ type SummarizeResponse = {
 };
 
 const ReviewList = ({ productId }: Props) => {
-   //Track the summary.
+   //call the mutation hook and give it an object, mutationFn, for mutating or updating data.
+   const {
+      mutate: handleSummarize, //to handle the click event of th button.
+      isPending: isSummaryLoading,
+      isError: isSummaryError,
+      data: SummarizeResponse,
+   } = useMutation<SummarizeResponse>({
+      mutationFn: () => summarizeReviews(),
+   });
+
+   //State variables replaced with the mutation hook above.
+   /*    //Track the summary.
    const [summary, setSummary] = useState('');
    //Track the loading state.
    const [isSummaryLoading, setIsSummaryLoading] = useState(false);
    //Track errors.
-   const [summaryError, setSummaryError] = useState('');
+   const [summaryError, setSummaryError] = useState(''); */
 
    /*    //State variable. Replaced by useQuery.
    const [reviewData, setReviewData] = useState<GetReviewsResponse>();
@@ -50,9 +60,16 @@ const ReviewList = ({ productId }: Props) => {
       queryFn: () => fetchReviews(), //get the data from the backend.
    });
 
-   //Define a function for handling summary generation, and use axios to make an API call.
-   const handleSummarize = async () => {
-      try {
+   //Define a function for handling summary generation, and use axios to make an API and return the data. This is only responsible for calling the backend.
+   const summarizeReviews = async () => {
+      const { data } = await axios.post<SummarizeResponse>(
+         `/api/products/${productId}/reviews/summarize`
+      );
+      return data;
+   };
+
+   //The try/catch completly was replaced with the call to the backend above.
+   /*       try {
          setIsSummaryLoading(true);
          setSummaryError('');
 
@@ -66,8 +83,7 @@ const ReviewList = ({ productId }: Props) => {
          setSummaryError('Could not summarize the reviews. Try again!');
       } finally {
          setIsSummaryLoading(false);
-      }
-   };
+      } */
 
    //Const to make an API call using axios and insert products dynamically. You get the data and return it.
    const fetchReviews = async () => {
@@ -99,7 +115,7 @@ const ReviewList = ({ productId }: Props) => {
       return null;
    }
 
-   const currentSummary = reviewData.summary || summary;
+   const currentSummary = reviewData.summary || SummarizeResponse?.summary;
 
    return (
       <div>
@@ -109,7 +125,7 @@ const ReviewList = ({ productId }: Props) => {
             ) : (
                <div>
                   <Button
-                     onClick={handleSummarize}
+                     onClick={() => handleSummarize()}
                      className="cursor-pointer"
                      disabled={isSummaryLoading}
                   >
@@ -121,8 +137,10 @@ const ReviewList = ({ productId }: Props) => {
                         <ReviewSkeleton />
                      </div>
                   )}
-                  {summaryError && (
-                     <p className="text-red-600">{summaryError}</p>
+                  {isSummaryError && (
+                     <p className="text-red-600">
+                        Could not summarize reviews. Try again later!
+                     </p>
                   )}
                </div>
             )}
