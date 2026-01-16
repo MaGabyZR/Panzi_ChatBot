@@ -1,35 +1,22 @@
-import axios from 'axios';
 import { HiSparkles } from 'react-icons/hi';
 import StarRating from './StarRating';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Button } from '../ui/button';
 import ReviewSkeleton from './ReviewSkeleton';
+import {
+   type SummarizeResponse,
+   type GetReviewsResponse,
+   reviewsApi,
+} from './reviewsApi';
 
 type Props = {
    productId: number;
 };
-//Define a type for the shape of the reviews.
-type Review = {
-   id: number;
-   author: string;
-   content: string;
-   rating: number;
-   createdAt: string;
-};
-//Define a type for the reviews endpoint object.
-type GetReviewsResponse = {
-   summary: string | null;
-   reviews: Review[];
-};
-
-type SummarizeResponse = {
-   summary: string;
-};
 
 const ReviewList = ({ productId }: Props) => {
-   //call the mutation hook and give it an object, mutationFn, for mutating or updating data.
+   //call the mutation hook and give it an object, mutationFn, for mutating or updating data and call the API layer.
    const summaryMutation = useMutation<SummarizeResponse>({
-      mutationFn: () => summarizeReviews(),
+      mutationFn: () => reviewsApi.summarizeReviews(productId),
    });
 
    //State variables replaced with the mutation hook above.
@@ -40,7 +27,7 @@ const ReviewList = ({ productId }: Props) => {
    //Track errors.
    const [summaryError, setSummaryError] = useState(''); */
 
-   /*    //State variable. Replaced by useQuery.
+   /*    //State variable. Replaced by useQuery bellow.
    const [reviewData, setReviewData] = useState<GetReviewsResponse>();
    const [isLoading, setIsLoading] = useState(false);
    const [error, setError] = useState(''); */
@@ -48,41 +35,8 @@ const ReviewList = ({ productId }: Props) => {
    //use the query hook from Tanstack.
    const reviewsQuery = useQuery<GetReviewsResponse>({
       queryKey: ['reviews', productId], //to cache reviews separatly for each product.
-      queryFn: () => fetchReviews(), //get the data from the backend.
+      queryFn: () => reviewsApi.fetchReviews(productId), //get the data from the backend from the API layer.
    });
-
-   //Define a function for handling summary generation, and use axios to make an API and return the data. This is only responsible for calling the backend.
-   const summarizeReviews = async () => {
-      const { data } = await axios.post<SummarizeResponse>(
-         `/api/products/${productId}/reviews/summarize`
-      );
-      return data;
-   };
-
-   //The try/catch completly was replaced with the call to the backend above.
-   /*       try {
-         setIsSummaryLoading(true);
-         setSummaryError('');
-
-         const { data } = await axios.post<SummarizeResponse>(
-            `/api/products/${productId}/reviews/summarize`
-         );
-
-         setSummary(data.summary);
-      } catch (error) {
-         console.error(error);
-         setSummaryError('Could not summarize the reviews. Try again!');
-      } finally {
-         setIsSummaryLoading(false);
-      } */
-
-   //Const to make an API call using axios and insert products dynamically. You get the data and return it.
-   const fetchReviews = async () => {
-      const { data } = await axios.get<GetReviewsResponse>(
-         `/api/products/${productId}/reviews`
-      );
-      return data;
-   };
 
    if (reviewsQuery.isLoading) {
       return (
