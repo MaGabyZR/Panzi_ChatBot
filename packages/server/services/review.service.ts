@@ -1,6 +1,5 @@
 import { reviewRepository } from '../repositories/review.repository';
 import { llmClient } from '../llm/client';
-import template from '../prompts/summarize-reviews.txt';
 
 export const reviewService = {
    /*    async getReviews(productId: number): Promise<Review[]> {       //Have the controller talk to the repository directly.
@@ -21,16 +20,11 @@ export const reviewService = {
       const reviews = await reviewRepository.getReviews(productId, 10);
       //Join the reviews in a string to send to an LLM. '\n\n' to separate and format the string.
       const joinedReviews = reviews.map((r) => r.content).join('\n\n');
-      //Call prompt from the txt file and replace with the joinedReviews.
-      const prompt = template.replace('{{reviews}}', joinedReviews);
+      //Call prompt from the txt file and replace with the joinedReviews. NO LONGER NEEDED, AS IT WAS MOVED TO client.ts
+      //const prompt = template.replace('{{reviews}}', joinedReviews);
 
-      //use the client to create a summary.Send the reviews to a LLM, by just calling llClient from client.ts
-      const { text: summary } = await llmClient.generateText({
-         model: 'gpt-4.1',
-         prompt,
-         temperature: 0.2,
-         maxTokens: 500,
-      });
+      //use the client to create a summary.Send the reviews to a LLM, by just calling summarize from HuggingFace in client.ts
+      const summary = await llmClient.summarizeReviews(joinedReviews);
 
       //store in the db before returning it.
       await reviewRepository.storeReviewSummary(productId, summary);

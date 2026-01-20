@@ -1,11 +1,16 @@
 import OpenAI from 'openai';
+import { InferenceClient } from '@huggingface/inference';
+import summarizePrompt from '../prompts/summarize-reviews.txt';
 
 //Here we hide the complexity of talking to an LLM and only exporting the generateText for talking to an LLM.
 
 //Create an OpenAI object.
-const client = new OpenAI({
+const openAIClient = new OpenAI({
    apiKey: process.env.OPENAI_API_KEY,
 });
+
+//Create an HuggingFace cliente object.
+const inferenceClient = new InferenceClient(process.env.HF_TOKEN);
 
 type GenerateTextOptions = {
    model?: string;
@@ -31,7 +36,7 @@ export const llmClient = {
       maxTokens = 300,
       previousResponseId,
    }: GenerateTextOptions): Promise<GenerateTextResult> {
-      const response = await client.responses.create({
+      const response = await openAIClient.responses.create({
          model,
          input: prompt,
          instructions,
@@ -45,5 +50,24 @@ export const llmClient = {
          id: response.id,
          text: response.output_text,
       };
+   },
+   //Define a new method for summarizing reviews with HuggingFace.
+   async summarizeReviews(reviews: string) {
+      const chatCompletion = await inferenceClient.chatCompletion({
+         model: 'meta-llama/Llama-3.1-8B-Instruct:novita',
+         messages: [
+            {
+               role: 'system',
+               content: summarizePrompt,
+            },
+
+            {
+               role: 'user',
+               content: reviews,
+            },
+         ],
+      });
+
+      return chatCompletion.choices[0]?.message.content || '';
    },
 };
